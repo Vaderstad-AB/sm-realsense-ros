@@ -1,0 +1,59 @@
+# Note: TARGETPLATFORM is set by Docker BuildKit
+ARG TARGETPLATFORM=linux/amd64
+ARG ROS_DISTRO=jazzy
+ARG TARGET=base
+
+####################################################################################################
+FROM --platform=$TARGETPLATFORM crresearchplatformdtweu.azurecr.io/common_dev:latest AS framos
+
+# Re-declare so it’s available in later instructions
+ARG TARGETPLATFORM
+RUN echo "TARGETPLATFORM is ${TARGETPLATFORM}"
+
+LABEL TARGETPLATFORM=${TARGETPLATFORM}
+LABEL maintainer="jonas.rangsjo@vaderstad.com"
+LABEL description="Framos image for ResearchPlatform"
+
+ARG USERNAME=ubuntu
+ARG UID=1000
+ARG GID=1000
+
+#Okay for a docker but dont do this on your desktop machine
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
+# Allow for non-interactive installation of packages
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update -q && \
+    apt-get install -y linux-headers-$(uname -r) && \
+    apt install gcc g++ cmake libglfw3-dev libgtk-3-dev git libssl-dev libusb-1.0-0-dev pkg-config -y && \
+    apt install libgl1-mesa-dev libglu1-mesa-dev -y && \
+    apt install v4l-utils -y
+
+
+
+WORKDIR ${REPO_ROOT}
+ENV PROJECT_RESOURCE_PATH="/librealsense/${TARGETPLATFORM}"
+
+RUN mkdir -p ${PROJECT_RESOURCE_PATH} && \
+    chown $USERNAME ${PROJECT_RESOURCE_PATH} && \
+    cd ${PROJECT_RESOURCE_PATH} && \
+    touch COLCON_IGNORE && \
+    git clone https://github.com/IntelRealSense/librealsense.git -b v2.56.3 && \
+    cd librealsense && \
+    ./scripts/setup_udev_rules.sh
+
+
+RUN cd ${PROJECT_RESOURCE_PATH}/librealsense \
+    && mkdir artifacts \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+        -DBUILD_GRAPHICAL_EXAMPLES=true \
+        -DBUILD_EXAMPLES=true \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DFORCE_RSUSB_BACKEND=false \
+        -DCHECK_FOR_UPDATES=OFF \
+        -DCMAKE_INSTALL_PREFIX="${REPO_ROOT}/${PROJECT_RESOURCE_PATH}/librealsense/artifacts" \
+    && make -j2 \
+    && make install
