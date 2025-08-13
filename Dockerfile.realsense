@@ -30,8 +30,6 @@ RUN apt-get update -q && \
     apt install libgl1-mesa-dev libglu1-mesa-dev -y && \
     apt install v4l-utils -y
 
-
-
 WORKDIR ${REPO_ROOT}
 ENV PROJECT_RESOURCE_PATH="/librealsense/${TARGETPLATFORM}"
 
