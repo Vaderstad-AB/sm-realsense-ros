@@ -7,6 +7,7 @@ SCRIPT_PATH=$(dirname $(realpath "$0"))
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 REPO_ROOT=$(realpath "${DIR}/..")
+ROS_DISTRO=jazzy
 ARCH="$(uname -m | grep -q 'aarch' && echo 'arm64' || echo 'amd64')"
 
 build_docker_image()
@@ -65,21 +66,17 @@ print_debug()
 }
 
 push_images_to_registry() {
-    # Local registry address
     local registry="crresearchplatformdtweu.azurecr.io"
 
     # Define a list of images
     local images=(
-        "base:$ARCH-latest"
-        "common_dev:$ARCH-latest"
-        "common_deploy:$ARCH-latest"
+        "librealsense-dev:latest-$ARCH"
     )
 
     # Loop through the list of images and push each one
     for image in "${images[@]}"; do
         docker push "$registry/$image"
     done
-
 }
 
 # Main execution flow
@@ -91,4 +88,4 @@ create_shared_folder
 build_docker_image
 
 # Push the Docker images to the local registry
-# epush_images_to_registry
+push_images_to_registry
