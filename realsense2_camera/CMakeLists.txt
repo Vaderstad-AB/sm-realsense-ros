@@ -119,7 +119,18 @@ find_package(tf2 REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core)
 
-find_package(realsense2 2.56.3)
+if(DEFINED LIBREALSENSE_PATH)
+  message(WARNING "Inside IF LIBREALSENSE_PATH")
+  find_package(realsense2 2.56.3 REQUIRED PATHS ${LIBREALSENSE_PATH}/lib/cmake/realsense2 NO_DEFAULT_PATH)
+else()
+  find_package(realsense2 2.56.3)
+endif()
+# Ensure the package was found
+if (NOT TARGET realsense2::realsense2)
+    message(FATAL_ERROR "Target 'realsense2::realsense2' not found")
+endif()
+
+
 if (BUILD_ACCELERATE_GPU_WITH_GLSL)
   find_package(realsense2-gl 2.56.3)
 endif()
